@@ -1,0 +1,151 @@
+#Title: Morse Code Blinker GUI
+#Author: Matthew Murrell
+#Date: 20/04/2022
+#Created for SIT210 Task 5.3D
+
+### LIBRARIES ###
+from tkinter import *
+import tkinter.font
+import RPi.GPIO as GPIO
+import time
+
+#### GLOBAL VARIABLES###
+LED_PIN = 16 #The pin connected to the LED
+MORSE_UNIT = 0.25 #The length of each morse unit in seconds
+
+#The morse code dictionary used to convert letters into morse code
+morse_dict = {
+    'a' : '.-',
+    'b' : '-...',
+    'c' : '-.-.',
+    'd' : '-..',
+    'e' : '.',
+    'f' : '..-.',
+    'g' : '--.',
+    'h' : '....',
+    'i' : '..',
+    'j' : '.---',
+    'k' : '-.-',
+    'l' : '.-..',
+    'm' : '--',
+    'n' : '-.',
+    'o' : '---',
+    'p' : '.--.',
+    'q' : '--.-',
+    'r' : '.-.',
+    's' : '...',
+    't' : '-',
+    'u' : '..-',
+    'v' : '...-',
+    'w' : '.--',
+    'x' : '-..-',
+    'y' : '-.--',
+    'z' : '--..',
+    '0' : '-----',
+    '1' : '.----',
+    '2' : '..---',
+    '3' : '...--',
+    '4' : '....-',
+    '5' : '.....',
+    '6' : '-....',
+    '7' : '--...',
+    '8' : '---..',
+    '9' : '----.',
+    ' ' : '   '
+    }
+
+### GUI DEFINITIONS ###
+win = Tk()
+win.title=("Morse Code Blinker")
+buttonFont = tkinter.font.Font(family = "Helvetica", size = 13, weight = "bold")
+titleFont = tkinter.font.Font(family = "Helvetica", size = 25, weight = "bold")
+
+### GPIO SETUP ###
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(LED_PIN, GPIO.OUT)
+
+### FUNCTIONS ###
+
+#Returns the passed phrase in morse code as a string of dots and dashes
+def morse_translate(phrase):
+    morse_phrase = ""
+    for letter in phrase:
+        try:
+            morse_phrase += (morse_dict[(letter.lower())])
+            morse_phrase += " "
+        except KeyError:
+            pass
+    morse_phrase += "   "
+    return morse_phrase
+
+
+#Blinks out a morse 'dit' on the LED_PIN pin
+def morse_dit():
+	#Turn on the LED
+	GPIO.output(LED_PIN, GPIO.HIGH)
+	#Leave it on for one unit
+	time.sleep(MORSE_UNIT)
+    #Turn it off
+	GPIO.output(LED_PIN, GPIO.LOW)
+    #Wait one more unit
+	time.sleep(MORSE_UNIT)
+
+#Blinks out a morse 'dah' on the LED_PIN pin
+def morse_dah():
+	#Turn on the LED
+	GPIO.output(LED_PIN, GPIO.HIGH)
+	#Leave it on for three units
+	time.sleep(3 * MORSE_UNIT)
+	#Turn it off
+	GPIO.output(LED_PIN, GPIO.LOW)
+    #Wait one more unit
+	time.sleep(MORSE_UNIT)
+
+### TKINTER COMMAND FUNCTIONS ###
+
+#Blinks out the passed phrase in morse code
+def morse_blink():
+    phrase = text_input.get("1.0", "end-1c")[0:12]
+    for letter in morse_translate(phrase):
+        if letter == ".":
+            morse_dit()
+        elif letter == "-":
+            morse_dah()
+        elif letter == " ":
+            time.sleep(2 * MORSE_UNIT)
+
+
+#Turns off all of the LEDs, cleans up GPIO and closes the window
+def close():
+    GPIO.output(LED_PIN, GPIO.LOW)
+    GPIO.cleanup()
+    win.destroy()
+
+
+### WIDGETS ###
+
+#The instructions label that  instructs the user how to use the program
+title = Label(text = "MORSE CODE BLINKER", font = titleFont, bg = "lightblue")
+title.grid(row=0, column=0) 
+
+#The instructions label that  instructs the user how to use the program
+instructions = Label(text = "Enter the word to be blinked and click 'Blink'\n(Max 12 chars)")
+instructions.grid(row=1, column=0)                    
+
+#The text box that the user enters the word to be blinked out into
+text_input = Text(win, height = 1, width = 12, bg = "light yellow")
+text_input.grid(row=2, column=0)
+
+#The button that blinks out the text in 'text_input' when clicked.
+blinkButton = Button(win, text = "Blink", font = buttonFont, command = morse_blink, height = 1, width = 10)
+blinkButton.grid(row=3, column=0)
+
+#The button that turns off and cleans up the program when clicked.
+exitButton = Button(win, text = "Exit", font = buttonFont, command = close, height = 1, width = 10, bg="red")
+exitButton.grid(row=4, column=0)
+
+#Calls the close function when the window is closed
+win.protocol("WM_DELETE_WINDOW", close)
+
+#The main loop of the GUI
+win.mainloop()
